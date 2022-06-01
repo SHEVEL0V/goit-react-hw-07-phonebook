@@ -1,51 +1,35 @@
 import React, { useState } from 'react';
+import ClipLoader from 'react-spinners/ClipLoader';
 import { BsFillArrowRightSquareFill } from 'react-icons/bs';
-import { nanoid } from 'nanoid';
-import { useSelector, useDispatch } from 'react-redux';
-import { addContacts } from 'redux/contacts-action';
 import {
-  useGetContactsQuery,
   useAddContactsMutation,
-} from 'redux/contacts-fetch';
-
+  useGetContactsQuery,
+} from 'redux/contacts-RTK';
 import s from './form.module.css';
 
 export default function Form() {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [status, setStatus] = useState(true);
+  const { data } = useGetContactsQuery('');
 
-  const [updatePost] = useAddContactsMutation();
-
-  const { data, isFetching, currentData } = useGetContactsQuery();
-
-  console.log(data);
-
-  const contacts = useSelector(state => state.items);
-  const dispatch = useDispatch();
+  const [updatePost, { isLoading: isUpdating }] =
+    useAddContactsMutation();
 
   const onSubmit = () => {
-    addValidContacts({ name, phone, id: nanoid(5) });
     removeState();
-    setStatus(!status);
-    updatePost({ name, phone });
+
+    if (
+      data.every(e => e.name.toLowerCase() !== name.toLowerCase())
+    ) {
+      updatePost({ name, phone });
+    } else {
+      alert(`"${name}" is already in contact!`);
+    }
   };
 
   const removeState = () => {
     setName('');
     setPhone('');
-  };
-
-  const addValidContacts = value => {
-    if (
-      contacts.every(
-        e => e.name.toLowerCase() !== value.name.toLowerCase(),
-      )
-    ) {
-      dispatch(addContacts(value));
-    } else {
-      alert(`"${value.name}" is already in contact!`);
-    }
   };
 
   return (
@@ -83,9 +67,13 @@ export default function Form() {
         />
       </label>
       <button className={s.button} type="sabmit">
-        {isFetching && !currentData ? 'loading...' : 'add contact'}
+        add contact
         <span>
-          <BsFillArrowRightSquareFill />
+          {isUpdating ? (
+            <ClipLoader size={15} />
+          ) : (
+            <BsFillArrowRightSquareFill />
+          )}
         </span>
       </button>
     </form>
